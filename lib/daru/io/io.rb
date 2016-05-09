@@ -74,21 +74,22 @@ module Daru
         # Preprocess headers for detecting and correcting repetition in
         # case the :headers option is not specified.
         unless opts[:headers]
-          csv = ::CSV.open(path, 'rb', opts)
-          yield csv if block_given?
-
-          csv_as_arrays = csv.to_a
-          headers       = csv_as_arrays[0].recode_repeated.map
-          csv_as_arrays.delete_at 0
-          csv_as_arrays = csv_as_arrays.transpose
-
           hsh = {}
-          headers.each_with_index do |h, i|
-            hsh[h] = csv_as_arrays[i]
+          ::CSV.open(path, 'rb', opts) do |csv|
+            yield csv if block_given?
+  
+            csv_as_arrays = csv.to_a
+            headers       = csv_as_arrays[0].recode_repeated.map
+            csv_as_arrays.delete_at 0
+            csv_as_arrays = csv_as_arrays.transpose
+  
+            headers.each_with_index do |h, i|
+              hsh[h] = csv_as_arrays[i]
+            end
+  
+            # Order columns as given in CSV
+            daru_options[:order] = headers.to_a
           end
-
-          # Order columns as given in CSV
-          daru_options[:order] = headers.to_a
         else
           opts[:header_converters] ||= :symbol
 
